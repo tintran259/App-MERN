@@ -1,5 +1,4 @@
 import { Request, Response } from 'express'
-
 interface LoginRequest extends Request {
   // Add any additional properties specific to the login request
 }

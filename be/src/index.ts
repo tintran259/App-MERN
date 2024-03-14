@@ -5,6 +5,7 @@ import appRouter from '~/routes'
 const app = express()
 const port = 3000
 // Router
+app.use(express.json())
 appRouter(app)
 // Connect Database
 mongoose
