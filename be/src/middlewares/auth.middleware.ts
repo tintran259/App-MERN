@@ -11,7 +11,7 @@ const loginValidation = (
 ) => {
   // Add validation logic here
   if (!req.body) {
-    return res.status(400).json({ message: 'Invalid request' }) 123
+    return res.status(400).json({ message: 'Invalid request' })
   }
   const { email, password } = req.body
   if (!email || !password) {
