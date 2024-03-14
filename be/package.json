@@ -17,6 +17,19 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm test"
+    }
+  },
+  "lint-staged": {
+    "*.{ts}": [
+      "pretty-quick --staged",
+      "eslint --fix",
+      "git add"
+    ]
+  },
   "dependencies": {
     "express": "^4.18.3",
     "mongodb": "^6.5.0",
