@@ -5,10 +5,11 @@ import { loginFunc, registerControllerUser } from '~/controllers/auth.controller
 import { loginValidation, registerValidation } from '~/middlewares/auth.middleware'
 // utils
 import { validate } from '~/utils/validate'
+import { asyncWrapper } from '~/utils/asyncWrapper'
 
 const router = Router()
 
 router.post('/login', loginValidation, loginFunc)
-router.post('/register', validate(registerValidation), registerControllerUser)
+router.post('/register', validate(registerValidation), asyncWrapper(registerControllerUser))
 
 export default router

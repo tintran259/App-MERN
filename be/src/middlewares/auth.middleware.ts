@@ -1,16 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
 import authServices from '~/services/auth.services'
-// others
-import { ILoginRequest } from '~/types/auth.type'
 
-const loginValidation = (
-  req: {
-    body: ILoginRequest
-  } & Request,
-  res: Response,
-  next: NextFunction
-) => {
+const loginValidation = (req: Request, res: Response, next: NextFunction) => {
   // Add validation logic here
   if (!req.body) {
     return res.status(400).json({ message: 'Invalid request' })
