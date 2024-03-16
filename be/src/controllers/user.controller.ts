@@ -1,11 +1,7 @@
 import { Request, Response } from 'express'
 
-interface UserRequest extends Request {
-  // Add any additional properties specific to the login request
-}
-
-const getUser = async (req: UserRequest, res: Response) => {
-  res.send('Users')
+const getUser = async (req: Request, res: Response) => {
+  res.send('users')
 }
 
 export { getUser }
