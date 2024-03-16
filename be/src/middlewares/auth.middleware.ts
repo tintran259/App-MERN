@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from 'express'
 import { checkSchema } from 'express-validator'
+import { STATUS_NAMING } from '~/constants/statusNaming'
 import authServices from '~/services/auth.services'
+import { ErrorServices } from '~/services/error.services'
 
 const loginValidation = (req: Request, res: Response, next: NextFunction) => {
   // Add validation logic here
@@ -25,7 +27,10 @@ const registerValidation = checkSchema({
       options: async (value: string) => {
         const isExits = await authServices.checkEmailExit(value)
         if (isExits) {
-          throw new Error('Email already exists')
+          throw new ErrorServices({
+            message: 'Email already exists',
+            statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY
+          })
         }
       }
     }
