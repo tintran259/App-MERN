@@ -19,10 +19,10 @@ export class ErrorServices {
 }
 
 export class EntityError extends ErrorServices {
-  errors: ErrorType
+  validates: ErrorType
 
-  constructor({ message = MESSAGE_ERROR.UNPROCESSABLE_ENTITY, errors }: { message?: string; errors: ErrorType }) {
+  constructor({ message = MESSAGE_ERROR.UNPROCESSABLE_ENTITY, validates }: { message?: string; validates: ErrorType }) {
     super({ message, statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY })
-    this.errors = errors
+    this.validates = validates
   }
 }

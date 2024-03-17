@@ -18,20 +18,32 @@ export const validate = (validations: RunnableValidationChains<ValidationChain>)
 
     // define entityError
     const entityError = new EntityError({
-      errors: {}
+      validates: {}
     })
 
+    console.log(errors.mapped())
+
     for (const key in errors.mapped()) {
-      const msg = errors.mapped()[key].msg as ErrorServices
-      if (msg && msg.statusCode !== STATUS_NAMING.UNPROCESSABLE_ENTITY) {
+      const errorMsg = errors.mapped()[key].msg
+      const statusCode = errorMsg.statusCode ? errorMsg.statusCode : STATUS_NAMING.UNPROCESSABLE_ENTITY
+      const message = errorMsg.statusCode ? errorMsg.message : errorMsg
+
+      const msg = new ErrorServices({ message, statusCode }) as ErrorServices
+
+      if (msg && msg.statusCode && msg.statusCode !== STATUS_NAMING.UNPROCESSABLE_ENTITY) {
+        console.log('msg: ', msg)
+
         return next(msg)
       } else {
-        entityError.errors[key] = {
+        entityError.validates[key] = {
           ...errors.mapped()[key],
           msg: msg.message
         }
       }
     }
+
+    console.log('entityError: ', entityError)
+
     next(entityError)
   }
 }

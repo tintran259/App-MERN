@@ -8,6 +8,13 @@ export type IRegisterRequest = {
   date_of_birth: Date
 }
 
+export type ILoginRequest = {
+  email: string
+  password: string
+  user_id?: string
+  info?: UserType
+}
+
 export interface UserType {
   name?: string
 

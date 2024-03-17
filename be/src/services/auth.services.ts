@@ -22,6 +22,8 @@ class AuthServices {
       }
     })
   }
+
+  // register
   async register(payload: IRegisterRequest) {
     try {
       const result = await databaseServices.users.insertOne(
@@ -47,6 +49,27 @@ class AuthServices {
     }
   }
 
+  // login
+  async login({ user_id }: { user_id?: string }) {
+    try {
+      if (user_id) {
+        // generate token
+        const [access_token, refresh_token] = await Promise.all([
+          this.signAccessToken(user_id),
+          this.signRefreshToken(user_id)
+        ])
+
+        return {
+          access_token,
+          refresh_token
+        }
+      }
+    } catch (error) {
+      return error
+    }
+  }
+
+  // check email exit
   async checkEmailExit(email: string) {
     try {
       const result = await databaseServices.users.findOne({ email })
