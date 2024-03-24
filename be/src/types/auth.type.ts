@@ -33,3 +33,10 @@ export interface UserType {
   avatar?: string
   cover_photo?: string
 }
+
+// refresh_token
+
+export interface RefreshTokenType {
+  user_id: string
+  refresh_token: string
+}

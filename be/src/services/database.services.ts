@@ -3,6 +3,7 @@ import { MongoClient, Db, Collection } from 'mongodb'
 import { Express } from 'express'
 import UserModal from '~/models/user.model'
 import { NAME_COLLECTION } from '~/constants'
+import RefreshTokenModel from '~/models/refreshToken.model'
 
 config()
 const port = 3000
@@ -35,6 +36,10 @@ class DatabaseServices {
 
   get users(): Collection<UserModal> {
     return this.db.collection(NAME_COLLECTION.USERS)
+  }
+
+  get refreshTokens(): Collection<RefreshTokenModel> {
+    return this.db.collection(NAME_COLLECTION.REFRESH_TOKENS)
   }
 }
 

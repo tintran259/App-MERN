@@ -23,6 +23,10 @@ class AuthServices {
     })
   }
 
+  private signAccessAndRefreshToken = async (user_id: string) => {
+    return Promise.all([this.signAccessToken(user_id), this.signRefreshToken(user_id)])
+  }
+
   // register
   async register(payload: IRegisterRequest) {
     try {
@@ -35,10 +39,13 @@ class AuthServices {
       // get user_id success
       const user_id = result.insertedId.toString()
       // generate token
-      const [access_token, refresh_token] = await Promise.all([
-        this.signAccessToken(user_id),
-        this.signRefreshToken(user_id)
-      ])
+      const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+
+      // save refresh token to database
+      await databaseServices.refreshTokens.insertOne({
+        user_id,
+        refresh_token
+      })
 
       return {
         access_token,
@@ -54,16 +61,28 @@ class AuthServices {
     try {
       if (user_id) {
         // generate token
-        const [access_token, refresh_token] = await Promise.all([
-          this.signAccessToken(user_id),
-          this.signRefreshToken(user_id)
-        ])
+        const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+        // save refresh token to database
+        await databaseServices.refreshTokens.insertOne({
+          user_id,
+          refresh_token
+        })
 
         return {
           access_token,
           refresh_token
         }
       }
+    } catch (error) {
+      return error
+    }
+  }
+
+  async logout({ refresh_token }: { refresh_token?: string }) {
+    try {
+      const result = await databaseServices.refreshTokens.deleteOne({ refresh_token })
+
+      return result
     } catch (error) {
       return error
     }

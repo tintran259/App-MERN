@@ -1,4 +1,7 @@
 import jwt, { Secret, SignOptions } from 'jsonwebtoken'
+import { MESSAGE_ERROR } from '~/constants/messageError'
+import { STATUS_NAMING } from '~/constants/statusNaming'
+import { ErrorServices } from '~/services/error.services'
 
 type GenerateTokenTypes = {
   payload: string | object | Buffer
@@ -19,6 +22,25 @@ export const generateToken = ({
         rejects(err)
       }
       resolve(token || '')
+    })
+  })
+}
+
+export const verifyToken = ({
+  token,
+  secretOrPrivateKey = process.env.JWT_SECRET_KEY as string
+}: {
+  token: string
+  secretOrPrivateKey?: string
+}) => {
+  // return 1 promise
+  return new Promise<jwt.JwtPayload>((resolve, rejects) => {
+    jwt.verify(token, secretOrPrivateKey, (err, decoded) => {
+      if (err) {
+        // token expired
+        throw err
+      }
+      return resolve(decoded as jwt.JwtPayload)
     })
   })
 }

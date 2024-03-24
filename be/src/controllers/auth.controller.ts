@@ -24,4 +24,15 @@ const registerControllerUser = async (req: Request<ParamsDictionary, any, IRegis
   res.status(200).json({ message: 'User created', data: result })
 }
 
-export { loginControllerUser, registerControllerUser }
+const logoutControllerUser = async (
+  req: Request<ParamsDictionary, any, { user_id: string; refresh_token: string }>,
+  res: Response
+) => {
+  await authServices.logout({
+    refresh_token: req.body.refresh_token
+  })
+
+  res.status(200).json({ message: 'Logout Success' })
+}
+
+export { loginControllerUser, registerControllerUser, logoutControllerUser }

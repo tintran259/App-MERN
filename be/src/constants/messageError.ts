@@ -14,7 +14,10 @@ const MESSAGE_ERROR = {
   PASSWORD_NOT_MATCH: 'Password and confirm password are not match',
   NAME_LENGTH: 'Name must be at least 3 characters long',
   DATE_INVALID: 'Date is invalid',
-  USER_NOT_FOUND: 'User not found'
+  USER_NOT_FOUND: 'User not found',
+  ACCESS_TOKEN_REQUIRED: 'Access token is required',
+  ACCESS_TOKEN_EXPIRED_IN_VALID: 'Access token is expired or invalid',
+  REFRESH_TOKEN_IS_INVALID_OR_EXPIRED: 'Refresh token is invalid or expired'
 }
 
 export { MESSAGE_ERROR }

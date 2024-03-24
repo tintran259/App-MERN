@@ -16,8 +16,8 @@ export const validate = (validations: RunnableValidationChains<ValidationChain>)
       return next()
     }
 
-    // define entityError
-    const entityError = new EntityError({
+    // define loginControllerUser
+    const loginControllerUser = new EntityError({
       validates: {}
     })
 
@@ -31,13 +31,13 @@ export const validate = (validations: RunnableValidationChains<ValidationChain>)
       if (msg && msg.statusCode && msg.statusCode !== STATUS_NAMING.UNPROCESSABLE_ENTITY) {
         return next(msg)
       } else {
-        entityError.validates[key] = {
+        loginControllerUser.validates[key] = {
           ...errors.mapped()[key],
           msg: msg.message
         }
       }
     }
 
-    next(entityError)
+    next(loginControllerUser)
   }
 }
