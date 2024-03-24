@@ -1,12 +1,18 @@
 import { Router } from 'express'
 // controllers
-import { loginControllerUser, logoutControllerUser, registerControllerUser } from '~/controllers/auth.controller'
+import {
+  emailVerifyController,
+  loginControllerUser,
+  logoutControllerUser,
+  registerControllerUser
+} from '~/controllers/auth.controller'
 // middleware
 import {
   loginValidation,
   registerValidation,
   validateAccessToken,
-  validateRefreshToken
+  validateRefreshToken,
+  validateMailToken
 } from '~/middlewares/auth.middleware'
 // utils
 import { validate } from '~/utils/validate'
@@ -45,5 +51,13 @@ router.post(
   validate(validateRefreshToken),
   asyncWrapper(logoutControllerUser)
 )
+
+/**
+ * Description: Email Verify
+ * Route: POST /email-verify
+ * Permissions: public
+ * Body: {email_verify_token: string}
+ */
+router.post('/email-verify', validate(validateMailToken), asyncWrapper(emailVerifyController))
 
 export default router

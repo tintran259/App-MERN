@@ -5,13 +5,13 @@ import { ErrorServices } from '~/services/error.services'
 
 type GenerateTokenTypes = {
   payload: string | object | Buffer
-  secretOrPrivateKey?: string
+  secretOrPrivateKey: string
   options?: SignOptions
 }
 
 export const generateToken = ({
   payload,
-  secretOrPrivateKey = process.env.JWT_SECRET_KEY as string,
+  secretOrPrivateKey,
   options = {
     algorithm: 'HS256'
   }
@@ -26,13 +26,7 @@ export const generateToken = ({
   })
 }
 
-export const verifyToken = ({
-  token,
-  secretOrPrivateKey = process.env.JWT_SECRET_KEY as string
-}: {
-  token: string
-  secretOrPrivateKey?: string
-}) => {
+export const verifyToken = ({ token, secretOrPrivateKey }: { token: string; secretOrPrivateKey: string }) => {
   // return 1 promise
   return new Promise<jwt.JwtPayload>((resolve, rejects) => {
     jwt.verify(token, secretOrPrivateKey, (err, decoded) => {

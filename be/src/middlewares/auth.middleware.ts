@@ -6,6 +6,7 @@ import { MESSAGE_ERROR } from '~/constants/messageError'
 import databaseServices from '~/services/database.services'
 import { sha256 } from '~/utils/sha256'
 import { verifyToken } from '~/utils/jwt'
+import { errorMessage } from '~/utils/errorMessage'
 
 const loginValidation = checkSchema(
   {
@@ -154,6 +155,12 @@ const validateAccessToken = checkSchema(
       custom: {
         options: async (value: string, { req }) => {
           try {
+            if (!value) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.ACCESS_TOKEN_REQUIRED,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              })
+            }
             const access_token = value.split(' ')[1] // "Bearer <access_token>" => get token after Bearer
             // if not exits token
             if (!access_token) {
@@ -164,12 +171,13 @@ const validateAccessToken = checkSchema(
             }
             // verify token
             const decode_token = await verifyToken({
-              token: access_token
+              token: access_token,
+              secretOrPrivateKey: process.env.JWT_SECRET_KEY_ACCESS_TOKEN as string
             })
             // if token valid => decode token => info user in payload token
             if (!decode_token) {
               throw new ErrorServices({
-                message: MESSAGE_ERROR.UNAUTHORIZED,
+                message: MESSAGE_ERROR.ACCESS_TOKEN_NOT_FOUND,
                 statusCode: STATUS_NAMING.UNAUTHORIZED
               })
             }
@@ -178,9 +186,12 @@ const validateAccessToken = checkSchema(
             req.body.user_id = user_id
             return true // next step
           } catch (error) {
-            throw new ErrorServices({
-              message: MESSAGE_ERROR.ACCESS_TOKEN_EXPIRED_IN_VALID,
-              statusCode: STATUS_NAMING.UNAUTHORIZED
+            errorMessage({
+              error,
+              errorDefault: {
+                message: MESSAGE_ERROR.ACCESS_TOKEN_EXPIRED_IN_VALID,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              }
             })
           }
         }
@@ -197,20 +208,26 @@ const validateAccessToken = checkSchema(
 const validateRefreshToken = checkSchema(
   {
     refresh_token: {
-      notEmpty: true,
       trim: true,
       custom: {
         options: async (value: string, { req }) => {
           try {
+            if (!value) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.REFRESH_TOKEN_REQUIRED,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              })
+            }
             const [decode_refresh_token, infoRefreshToken] = await Promise.all([
               verifyToken({
-                token: value
+                token: value,
+                secretOrPrivateKey: process.env.JWT_SECRET_KEY_REFRESH_TOKEN as string
               }),
               databaseServices.refreshTokens.findOne({ refresh_token: value })
             ])
             if (!infoRefreshToken) {
               throw new ErrorServices({
-                message: MESSAGE_ERROR.REFRESH_TOKEN_IS_INVALID_OR_EXPIRED,
+                message: MESSAGE_ERROR.REFRESH_TOKEN_NOT_FOUND,
                 statusCode: STATUS_NAMING.UNAUTHORIZED
               })
             }
@@ -219,9 +236,12 @@ const validateRefreshToken = checkSchema(
 
             return true
           } catch (error) {
-            throw new ErrorServices({
-              message: MESSAGE_ERROR.REFRESH_TOKEN_IS_INVALID_OR_EXPIRED,
-              statusCode: STATUS_NAMING.UNAUTHORIZED
+            errorMessage({
+              error,
+              errorDefault: {
+                message: MESSAGE_ERROR.REFRESH_TOKEN_IS_INVALID_OR_EXPIRED,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              }
             })
           }
         }
@@ -231,4 +251,49 @@ const validateRefreshToken = checkSchema(
   ['body']
 )
 
-export { loginValidation, registerValidation, validateAccessToken, validateRefreshToken }
+/**
+ * check email verify
+ * 1: check email verify
+ */
+
+const validateMailToken = checkSchema({
+  email_verify_token: {
+    trim: true,
+    custom: {
+      options: async (value: string, { req }) => {
+        try {
+          if (!value) {
+            throw new ErrorServices({
+              message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+              statusCode: STATUS_NAMING.UNAUTHORIZED
+            })
+          }
+
+          const decode_email_verify_token = await verifyToken({
+            token: value,
+            secretOrPrivateKey: process.env.JWT_SECRET_KEY_EMAIL_VERIFY_TOKEN as string
+          })
+
+          if (!decode_email_verify_token) {
+            throw new ErrorServices({
+              message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+              statusCode: STATUS_NAMING.UNAUTHORIZED
+            })
+          }
+
+          req.body.user_id = decode_email_verify_token.user_id
+        } catch (error) {
+          errorMessage({
+            error,
+            errorDefault: {
+              message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+              statusCode: STATUS_NAMING.UNAUTHORIZED
+            }
+          })
+        }
+      }
+    }
+  }
+})
+
+export { loginValidation, registerValidation, validateAccessToken, validateRefreshToken, validateMailToken }

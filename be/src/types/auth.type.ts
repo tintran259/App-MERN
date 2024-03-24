@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb'
 import { VerifyStatus } from './auth.enum'
 
 export type IRegisterRequest = {
@@ -16,6 +17,7 @@ export type ILoginRequest = {
 }
 
 export interface UserType {
+  _id?: ObjectId
   name?: string
 
   email: string

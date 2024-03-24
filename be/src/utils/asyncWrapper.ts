@@ -5,8 +5,6 @@ export const asyncWrapper = (func: (req: Request, res: Response, next: NextFunct
     try {
       await func(req, res, next)
     } catch (error) {
-      console.log('Error: ', error)
-
       next(error)
     }
   }

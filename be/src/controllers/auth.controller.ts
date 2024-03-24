@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import authServices from '~/services/auth.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 // types
@@ -35,4 +35,15 @@ const logoutControllerUser = async (
   res.status(200).json({ message: 'Logout Success' })
 }
 
-export { loginControllerUser, registerControllerUser, logoutControllerUser }
+const emailVerifyController = async (
+  req: Request<ParamsDictionary, any, { email_verify_token: string; user_id: string }>,
+  res: Response
+) => {
+  await authServices.emailVerify({
+    user_id: req.body.user_id
+  })
+
+  res.status(200).json({ message: 'Email verified' })
+}
+
+export { loginControllerUser, registerControllerUser, logoutControllerUser, emailVerifyController }

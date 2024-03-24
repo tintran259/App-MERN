@@ -1,6 +1,8 @@
 import { UserType } from '~/types/auth.type'
 import { VerifyStatus } from '~/types/auth.enum'
+import { ObjectId } from 'mongodb'
 export default class UserModal {
+  _id: ObjectId
   name: string
 
   email: string
@@ -19,6 +21,7 @@ export default class UserModal {
   cover_photo: string
 
   constructor(user: UserType) {
+    this._id = user._id || new ObjectId()
     this.name = user.name || ''
     this.email = user.email
     this.date_of_birth = user.date_of_birth || new Date()
