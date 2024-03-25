@@ -4,7 +4,8 @@ import {
   emailVerifyController,
   loginControllerUser,
   logoutControllerUser,
-  registerControllerUser
+  registerControllerUser,
+  resendEmailVerifyController
 } from '~/controllers/auth.controller'
 // middleware
 import {
@@ -59,5 +60,15 @@ router.post(
  * Body: {email_verify_token: string}
  */
 router.post('/email-verify', validate(validateMailToken), asyncWrapper(emailVerifyController))
+
+/**
+ * Description: ReSend Email Verify
+ * Route: POST /re-send-email-verify
+ * Permissions: user
+ * Header token: {Authorization: Bearer
+ * <access_token>}
+ */
+
+router.post('/resend-email-verify', validate(validateAccessToken), asyncWrapper(resendEmailVerifyController))
 
 export default router

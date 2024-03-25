@@ -46,4 +46,16 @@ const emailVerifyController = async (
   res.status(200).json({ message: 'Email verified' })
 }
 
-export { loginControllerUser, registerControllerUser, logoutControllerUser, emailVerifyController }
+const resendEmailVerifyController = async (req: Request<ParamsDictionary, any, { user_id: string }>, res: Response) => {
+  await authServices.resendEmailVerify({ user_id: req.body.user_id })
+
+  res.status(200).json({ message: 'Email sent' })
+}
+
+export {
+  loginControllerUser,
+  registerControllerUser,
+  logoutControllerUser,
+  emailVerifyController,
+  resendEmailVerifyController
+}

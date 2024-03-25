@@ -7,7 +7,7 @@ import databaseServices from './database.services'
 // others
 import { sha256 } from '~/utils/sha256'
 import { generateToken } from '~/utils/jwt'
-import { TokenType } from '~/types/auth.enum'
+import { TokenType, VerifyStatus } from '~/types/auth.enum'
 import { errorMessage } from '~/utils/errorMessage'
 import { IRegisterRequest } from '~/types/auth.type'
 import { STATUS_NAMING } from '~/constants/statusNaming'
@@ -126,7 +126,7 @@ class AuthServices {
           statusCode: STATUS_NAMING.INTERNAL_SERVER_ERROR
         })
       } else {
-        if (user.email_verify_token === '') {
+        if (user.email_verify_token === '' && user.verify === VerifyStatus.verified) {
           throw new ErrorServices({
             message: MESSAGE_ERROR.EMAIL_VERIFIED_BEFORE,
             statusCode: STATUS_NAMING.SUCCESS
@@ -138,13 +138,59 @@ class AuthServices {
           },
           {
             $set: {
-              email_verify_token: ''
+              email_verify_token: '',
+              verify: VerifyStatus.verified
+            },
+            $currentDate: {
+              updated_at: true
             }
           }
         )
       }
 
       return true
+    } catch (error) {
+      errorMessage({
+        error,
+        errorDefault: {
+          message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+          statusCode: STATUS_NAMING.UNAUTHORIZED
+        }
+      })
+    }
+  }
+
+  // resend email verify
+
+  async resendEmailVerify({ user_id }: { user_id: string }) {
+    try {
+      const user = await databaseServices.users.findOne({ _id: new ObjectId(user_id) })
+      if (!user) {
+        throw new ErrorServices({
+          message: MESSAGE_ERROR.USER_NOT_FOUND,
+          statusCode: STATUS_NAMING.INTERNAL_SERVER_ERROR
+        })
+      }
+      if (user.verify === VerifyStatus.verified) {
+        throw new ErrorServices({
+          message: MESSAGE_ERROR.EMAIL_VERIFIED_BEFORE,
+          statusCode: STATUS_NAMING.SUCCESS
+        })
+      }
+      // update email verify token for user
+      await databaseServices.users.updateOne(
+        {
+          _id: new ObjectId(user_id)
+        },
+        {
+          $set: {
+            email_verify_token: await this.signEmailVerifyToken(user_id)
+          },
+          $currentDate: {
+            updated_at: true
+          }
+        }
+      )
     } catch (error) {
       errorMessage({
         error,
