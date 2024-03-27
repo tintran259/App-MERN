@@ -2,10 +2,13 @@ import { Router } from 'express'
 // controllers
 import {
   emailVerifyController,
+  forgotPasswordController,
   loginControllerUser,
   logoutControllerUser,
   registerControllerUser,
-  resendEmailVerifyController
+  resendEmailVerifyController,
+  verifyForgotPasswordTokenController,
+  resetPasswordController
 } from '~/controllers/auth.controller'
 // middleware
 import {
@@ -13,7 +16,10 @@ import {
   registerValidation,
   validateAccessToken,
   validateRefreshToken,
-  validateMailToken
+  validateMailToken,
+  validateMailForgotPassword,
+  validateForgotPasswordToken,
+  validateResetPassword
 } from '~/middlewares/auth.middleware'
 // utils
 import { validate } from '~/utils/validate'
@@ -70,5 +76,35 @@ router.post('/email-verify', validate(validateMailToken), asyncWrapper(emailVeri
  */
 
 router.post('/resend-email-verify', validate(validateAccessToken), asyncWrapper(resendEmailVerifyController))
+
+/**
+ * Description: Forgot Password
+ * Route: POST /forgot-password
+ * Permissions: public
+ * Header token: {Authorization: Bearer <access_token>}
+ */
+
+router.post('/forgot-password', validate(validateMailForgotPassword), asyncWrapper(forgotPasswordController))
+
+/**
+ * Description: Verify Forgot Password
+ * Route: Post /verify-forgot-password
+ * Body {forgot_password_token: string}
+ */
+
+router.post(
+  '/verify-forgot-password',
+  validate(validateForgotPasswordToken),
+  asyncWrapper(verifyForgotPasswordTokenController)
+)
+
+/**
+ * Description: Reset Password
+ * Route: POST /reset-password
+ * Permissions: public
+ * Body: {forgot_password_token: string, password: string, confirm_password: string}
+ */
+
+router.post('/reset-password', validate(validateResetPassword), asyncWrapper(resetPasswordController))
 
 export default router

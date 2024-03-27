@@ -27,7 +27,13 @@ const MESSAGE_ERROR = {
   EMAIL_ALREADY_EXISTS: 'Email already exists',
   EMAIL_VERIFY_TOKEN_REQUIRED: 'Email verify token is required',
   EMAIL_VERIFIED: 'Email verified',
-  EMAIL_VERIFIED_BEFORE: 'Email verified before'
+  EMAIL_VERIFIED_BEFORE: 'Email verified before',
+  // Forgot Password
+  FORGOT_PASSWORD_EXIT: 'Check email to reset password',
+  FORGOT_PASSWORD_TOKEN_REQUIRED: 'Forgot password token is required',
+  // Reset Password
+  RESET_PASSWORD_SUCCESS: 'Password reset success',
+  RESET_PASSWORD_TOKEN_REQUIRED: 'Reset password token is required'
 }
 
 export { MESSAGE_ERROR }

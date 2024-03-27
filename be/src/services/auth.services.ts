@@ -46,6 +46,16 @@ class AuthServices {
     })
   }
 
+  private signForgotPasswordToken = (user_id: string) => {
+    return generateToken({
+      payload: { user_id, token_type: TokenType.ForgotPasswordToken },
+      secretOrPrivateKey: process.env.JWT_SECRET_KEY_FORGOT_PASSWORD as string,
+      options: {
+        expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRE_MINUTES
+      }
+    })
+  }
+
   private signAccessAndRefreshToken = async (user_id: string) => {
     return Promise.all([this.signAccessToken(user_id), this.signRefreshToken(user_id)])
   }
@@ -177,6 +187,7 @@ class AuthServices {
           statusCode: STATUS_NAMING.SUCCESS
         })
       }
+
       // update email verify token for user
       await databaseServices.users.updateOne(
         {
@@ -209,6 +220,66 @@ class AuthServices {
       return !!result
     } catch (error) {
       return error
+    }
+  }
+
+  // forgot password
+
+  async forgotPassword({ user_id }: { user_id: string }) {
+    try {
+      const tokenForgotPassword = await this.signForgotPasswordToken(user_id)
+      await databaseServices.users.updateOne(
+        {
+          _id: new ObjectId(user_id)
+        },
+        {
+          $set: {
+            forgot_password_token: tokenForgotPassword
+          },
+          $currentDate: {
+            updated_at: true
+          }
+        }
+      )
+
+      return {
+        forgot_password_token: tokenForgotPassword
+      }
+    } catch (error) {
+      errorMessage({
+        error,
+        errorDefault: {
+          message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+          statusCode: STATUS_NAMING.UNAUTHORIZED
+        }
+      })
+    }
+  }
+
+  async resetPassword({ user_id, password }: { user_id: string; password: string }) {
+    try {
+      await databaseServices.users.updateOne(
+        {
+          _id: new ObjectId(user_id)
+        },
+        {
+          $set: {
+            password: sha256(password),
+            forgot_password_token: ''
+          },
+          $currentDate: {
+            updated_at: true
+          }
+        }
+      )
+    } catch (error) {
+      errorMessage({
+        error,
+        errorDefault: {
+          message: MESSAGE_ERROR.RESET_PASSWORD_TOKEN_REQUIRED,
+          statusCode: STATUS_NAMING.UNAUTHORIZED
+        }
+      })
     }
   }
 }

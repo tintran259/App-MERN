@@ -1,4 +1,5 @@
-import { checkSchema } from 'express-validator'
+import { ObjectId } from 'mongodb'
+import { ParamSchema, checkSchema } from 'express-validator'
 import { STATUS_NAMING } from '~/constants/statusNaming'
 import authServices from '~/services/auth.services'
 import { ErrorServices } from '~/services/error.services'
@@ -7,6 +8,106 @@ import databaseServices from '~/services/database.services'
 import { sha256 } from '~/utils/sha256'
 import { verifyToken } from '~/utils/jwt'
 import { errorMessage } from '~/utils/errorMessage'
+import { validateAccessToken } from './common.middleware'
+
+const passwordSchema: ParamSchema = {
+  isLength: {
+    errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
+    options: { min: 6 }
+  },
+  notEmpty: true,
+  trim: true,
+  isStrongPassword: {
+    errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
+    options: {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    }
+  }
+}
+
+const confirmPasswordSchema: ParamSchema = {
+  isLength: {
+    errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
+    options: { min: 6 }
+  },
+  notEmpty: true,
+  trim: true,
+  isStrongPassword: {
+    errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
+    options: {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    }
+  },
+  custom: {
+    options: (value: string, { req }) => {
+      if (value !== req.body.password) {
+        throw new ErrorServices({
+          message: MESSAGE_ERROR.PASSWORD_NOT_MATCH,
+          statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY
+        })
+      }
+      return true
+    }
+  }
+}
+
+const forgotPasswordTokenSchema: ParamSchema = {
+  trim: true,
+  custom: {
+    options: async (value: string, { req }) => {
+      try {
+        if (!value) {
+          throw new ErrorServices({
+            message: MESSAGE_ERROR.FORGOT_PASSWORD_TOKEN_REQUIRED,
+            statusCode: STATUS_NAMING.UNAUTHORIZED
+          })
+        }
+
+        const decode_forgot_password_token = await verifyToken({
+          token: value,
+          secretOrPrivateKey: process.env.JWT_SECRET_KEY_FORGOT_PASSWORD as string
+        })
+
+        if (!decode_forgot_password_token) {
+          throw new ErrorServices({
+            message: MESSAGE_ERROR.FORGOT_PASSWORD_TOKEN_REQUIRED,
+            statusCode: STATUS_NAMING.UNAUTHORIZED
+          })
+        }
+
+        // check user valid
+        const { user_id } = decode_forgot_password_token
+
+        const user = await databaseServices.users.findOne({ _id: new ObjectId(user_id) })
+
+        if (!user) {
+          throw new ErrorServices({
+            message: MESSAGE_ERROR.USER_NOT_FOUND,
+            statusCode: STATUS_NAMING.INTERNAL_SERVER_ERROR
+          })
+        }
+
+        req.body.user_id = user_id
+      } catch (error) {
+        errorMessage({
+          error,
+          errorDefault: {
+            message: MESSAGE_ERROR.FORGOT_PASSWORD_TOKEN_REQUIRED,
+            statusCode: STATUS_NAMING.UNAUTHORIZED
+          }
+        })
+      }
+    }
+  }
+}
 
 const loginValidation = checkSchema(
   {
@@ -85,53 +186,8 @@ const registerValidation = checkSchema(
       },
       trim: true
     },
-    password: {
-      isLength: {
-        errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
-        options: { min: 6 }
-      },
-      notEmpty: true,
-      trim: true,
-      isStrongPassword: {
-        errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
-        options: {
-          minLength: 6,
-          minLowercase: 1,
-          minUppercase: 1,
-          minNumbers: 1,
-          minSymbols: 1
-        }
-      }
-    },
-    confirm_password: {
-      isLength: {
-        errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
-        options: { min: 6 }
-      },
-      notEmpty: true,
-      trim: true,
-      isStrongPassword: {
-        errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
-        options: {
-          minLength: 6,
-          minLowercase: 1,
-          minUppercase: 1,
-          minNumbers: 1,
-          minSymbols: 1
-        }
-      },
-      custom: {
-        options: (value: string, { req }) => {
-          if (value !== req.body.password) {
-            throw new ErrorServices({
-              message: MESSAGE_ERROR.PASSWORD_NOT_MATCH,
-              statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY
-            })
-          }
-          return true
-        }
-      }
-    },
+    password: passwordSchema,
+    confirm_password: confirmPasswordSchema,
     date_of_birth: {
       isDate: {
         errorMessage: MESSAGE_ERROR.DATE_INVALID
@@ -144,62 +200,6 @@ const registerValidation = checkSchema(
   ['body']
 )
 
-/**
- * check access token
- * 1. check access token valid
- * 2. check access token exits in database
- */
-const validateAccessToken = checkSchema(
-  {
-    Authorization: {
-      custom: {
-        options: async (value: string, { req }) => {
-          try {
-            if (!value) {
-              throw new ErrorServices({
-                message: MESSAGE_ERROR.ACCESS_TOKEN_REQUIRED,
-                statusCode: STATUS_NAMING.UNAUTHORIZED
-              })
-            }
-            const access_token = value.split(' ')[1] // "Bearer <access_token>" => get token after Bearer
-            // if not exits token
-            if (!access_token) {
-              throw new ErrorServices({
-                message: MESSAGE_ERROR.ACCESS_TOKEN_REQUIRED,
-                statusCode: STATUS_NAMING.UNAUTHORIZED
-              })
-            }
-            // verify token
-            const decode_token = await verifyToken({
-              token: access_token,
-              secretOrPrivateKey: process.env.JWT_SECRET_KEY_ACCESS_TOKEN as string
-            })
-            // if token valid => decode token => info user in payload token
-            if (!decode_token) {
-              throw new ErrorServices({
-                message: MESSAGE_ERROR.ACCESS_TOKEN_NOT_FOUND,
-                statusCode: STATUS_NAMING.UNAUTHORIZED
-              })
-            }
-            // get user_id in payload token
-            const user_id = decode_token.user_id
-            req.body.user_id = user_id
-            return true // next step
-          } catch (error) {
-            errorMessage({
-              error,
-              errorDefault: {
-                message: MESSAGE_ERROR.ACCESS_TOKEN_EXPIRED_IN_VALID,
-                statusCode: STATUS_NAMING.UNAUTHORIZED
-              }
-            })
-          }
-        }
-      }
-    }
-  },
-  ['headers']
-)
 /**
  * check refresh token
  * 1. check refresh token valid
@@ -256,44 +256,114 @@ const validateRefreshToken = checkSchema(
  * 1: check email verify
  */
 
-const validateMailToken = checkSchema({
-  email_verify_token: {
-    trim: true,
-    custom: {
-      options: async (value: string, { req }) => {
-        try {
-          if (!value) {
-            throw new ErrorServices({
-              message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
-              statusCode: STATUS_NAMING.UNAUTHORIZED
-            })
-          }
-
-          const decode_email_verify_token = await verifyToken({
-            token: value,
-            secretOrPrivateKey: process.env.JWT_SECRET_KEY_EMAIL_VERIFY_TOKEN as string
-          })
-
-          if (!decode_email_verify_token) {
-            throw new ErrorServices({
-              message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
-              statusCode: STATUS_NAMING.UNAUTHORIZED
-            })
-          }
-
-          req.body.user_id = decode_email_verify_token.user_id
-        } catch (error) {
-          errorMessage({
-            error,
-            errorDefault: {
-              message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
-              statusCode: STATUS_NAMING.UNAUTHORIZED
+const validateMailToken = checkSchema(
+  {
+    email_verify_token: {
+      trim: true,
+      custom: {
+        options: async (value: string, { req }) => {
+          try {
+            if (!value) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              })
             }
-          })
+
+            const decode_email_verify_token = await verifyToken({
+              token: value,
+              secretOrPrivateKey: process.env.JWT_SECRET_KEY_EMAIL_VERIFY_TOKEN as string
+            })
+
+            if (!decode_email_verify_token) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              })
+            }
+
+            req.body.user_id = decode_email_verify_token.user_id
+          } catch (error) {
+            errorMessage({
+              error,
+              errorDefault: {
+                message: MESSAGE_ERROR.EMAIL_VERIFY_TOKEN_REQUIRED,
+                statusCode: STATUS_NAMING.UNAUTHORIZED
+              }
+            })
+          }
         }
       }
     }
-  }
-})
+  },
+  ['body']
+)
 
-export { loginValidation, registerValidation, validateAccessToken, validateRefreshToken, validateMailToken }
+/**
+ * 1: check verify email
+ * 2: check info user valid
+ * 3: save token forgot password
+ */
+
+const validateMailForgotPassword = checkSchema(
+  {
+    email: {
+      isEmail: {
+        errorMessage: MESSAGE_ERROR.EMAIL_INVALID
+      },
+      notEmpty: true,
+      trim: true,
+      custom: {
+        options: async (value: string, { req }) => {
+          const user = await databaseServices.users.findOne({ email: value })
+
+          // check user valid
+          if (!user) {
+            throw new ErrorServices({
+              message: MESSAGE_ERROR.USER_NOT_FOUND,
+              statusCode: STATUS_NAMING.INTERNAL_SERVER_ERROR
+            })
+          }
+
+          // if user have forgot password token
+          if (user.forgot_password_token) {
+            throw new ErrorServices({
+              message: MESSAGE_ERROR.FORGOT_PASSWORD_EXIT,
+              statusCode: STATUS_NAMING.INTERNAL_SERVER_ERROR
+            })
+          }
+
+          req.body.user_id = user._id.toString()
+        }
+      }
+    }
+  },
+  ['body']
+)
+
+const validateForgotPasswordToken = checkSchema(
+  {
+    forgot_password_token: forgotPasswordTokenSchema
+  },
+  ['body']
+)
+
+const validateResetPassword = checkSchema(
+  {
+    password: passwordSchema,
+    confirm_password: confirmPasswordSchema,
+    forgot_password_token: forgotPasswordTokenSchema
+  },
+  ['body']
+)
+
+export {
+  loginValidation,
+  registerValidation,
+  validateAccessToken,
+  validateRefreshToken,
+  validateMailToken,
+  validateMailForgotPassword,
+  validateForgotPasswordToken,
+  validateResetPassword
+}

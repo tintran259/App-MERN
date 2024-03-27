@@ -52,10 +52,35 @@ const resendEmailVerifyController = async (req: Request<ParamsDictionary, any, {
   res.status(200).json({ message: 'Email sent' })
 }
 
+const forgotPasswordController = async (req: Request<ParamsDictionary, any, { user_id: string }>, res: Response) => {
+  const result = await authServices.forgotPassword({ user_id: req.body.user_id })
+
+  res.status(200).json({ message: 'Email forgot password sent', data: result })
+}
+
+const verifyForgotPasswordTokenController = async (
+  req: Request<ParamsDictionary, any, { user_id: string }>,
+  res: Response
+) => {
+  res.status(200).json({ message: 'Email forgot password verified' })
+}
+
+const resetPasswordController = async (
+  req: Request<ParamsDictionary, any, { user_id: string; password: string }>,
+  res: Response
+) => {
+  await authServices.resetPassword({ user_id: req.body.user_id, password: req.body.password })
+
+  res.status(200).json({ message: 'Password reset success' })
+}
+
 export {
   loginControllerUser,
   registerControllerUser,
   logoutControllerUser,
   emailVerifyController,
-  resendEmailVerifyController
+  resendEmailVerifyController,
+  forgotPasswordController,
+  verifyForgotPasswordTokenController,
+  resetPasswordController
 }
