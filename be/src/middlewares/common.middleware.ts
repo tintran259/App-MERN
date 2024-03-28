@@ -1,10 +1,24 @@
-import { checkSchema } from 'express-validator'
+import { ParamSchema, checkSchema } from 'express-validator'
 import { MESSAGE_ERROR } from '~/constants/messageError'
 import { STATUS_NAMING } from '~/constants/statusNaming'
 import { ErrorServices } from '~/services/error.services'
 import { errorMessage } from '~/utils/errorMessage'
 import { verifyToken } from '~/utils/jwt'
 
+const nameSchema: ParamSchema = {
+  isLength: {
+    errorMessage: MESSAGE_ERROR.NAME_LENGTH,
+    options: { min: 3 }
+  },
+  trim: true
+}
+
+const dateOfBirthSchema: ParamSchema = {
+  isDate: {
+    errorMessage: MESSAGE_ERROR.DATE_INVALID
+  },
+  trim: true
+}
 /**
  * check access token
  * 1. check access token valid
@@ -45,6 +59,7 @@ const validateAccessToken = checkSchema(
             // get user_id in payload token
             const user_id = decode_token.user_id
             req.body.user_id = user_id
+            req.body.decode_token = decode_token
             return true // next step
           } catch (error) {
             errorMessage({
@@ -62,4 +77,4 @@ const validateAccessToken = checkSchema(
   ['headers']
 )
 
-export { validateAccessToken }
+export { validateAccessToken, nameSchema, dateOfBirthSchema }

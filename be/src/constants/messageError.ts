@@ -33,7 +33,13 @@ const MESSAGE_ERROR = {
   FORGOT_PASSWORD_TOKEN_REQUIRED: 'Forgot password token is required',
   // Reset Password
   RESET_PASSWORD_SUCCESS: 'Password reset success',
-  RESET_PASSWORD_TOKEN_REQUIRED: 'Reset password token is required'
+  RESET_PASSWORD_TOKEN_REQUIRED: 'Reset password token is required',
+  // User
+  USER_NOT_VERIFIED: 'User not verified',
+  BIO_LENGTH: 'Bio must be at most 255 characters long',
+  USERNAME_LENGTH: 'Username must be at least 3 characters long and at most 10 characters long',
+  COVER_PHOTO_INVALID: 'Cover photo is invalid',
+  AVATAR_INVALID: 'Avatar is invalid'
 }
 
 export { MESSAGE_ERROR }

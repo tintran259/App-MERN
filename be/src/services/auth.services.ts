@@ -14,11 +14,12 @@ import { STATUS_NAMING } from '~/constants/statusNaming'
 import { MESSAGE_ERROR } from '~/constants/messageError'
 
 class AuthServices {
-  private signAccessToken = (user_id: string) => {
+  private signAccessToken = ({ user_id, verify }: { user_id: string; verify: VerifyStatus }) => {
     return generateToken({
       payload: {
         user_id,
-        token_type: TokenType.AccessToken
+        token_type: TokenType.AccessToken,
+        verify
       },
       secretOrPrivateKey: process.env.JWT_SECRET_KEY_ACCESS_TOKEN as string,
       options: {
@@ -26,9 +27,9 @@ class AuthServices {
       }
     })
   }
-  private signRefreshToken = (user_id: string) => {
+  private signRefreshToken = ({ user_id, verify }: { user_id: string; verify: VerifyStatus }) => {
     return generateToken({
-      payload: { user_id, token_type: TokenType.RefreshToken },
+      payload: { user_id, token_type: TokenType.RefreshToken, verify },
       secretOrPrivateKey: process.env.JWT_SECRET_KEY_REFRESH_TOKEN as string,
       options: {
         expiresIn: process.env.REFRESH_TOKEN_EXPIRE_MINUTES
@@ -36,9 +37,9 @@ class AuthServices {
     })
   }
 
-  private signEmailVerifyToken = (user_id: string) => {
+  private signEmailVerifyToken = ({ user_id, verify }: { user_id: string; verify: VerifyStatus }) => {
     return generateToken({
-      payload: { user_id, token_type: TokenType.EmailVerifyToken },
+      payload: { user_id, token_type: TokenType.EmailVerifyToken, verify },
       secretOrPrivateKey: process.env.JWT_SECRET_KEY_EMAIL_VERIFY_TOKEN as string,
       options: {
         expiresIn: process.env.EMAIL_VERIFY_TOKEN_EXPIRE_MINUTES
@@ -46,9 +47,9 @@ class AuthServices {
     })
   }
 
-  private signForgotPasswordToken = (user_id: string) => {
+  private signForgotPasswordToken = ({ user_id, verify }: { user_id: string; verify: VerifyStatus }) => {
     return generateToken({
-      payload: { user_id, token_type: TokenType.ForgotPasswordToken },
+      payload: { user_id, token_type: TokenType.ForgotPasswordToken, verify },
       secretOrPrivateKey: process.env.JWT_SECRET_KEY_FORGOT_PASSWORD as string,
       options: {
         expiresIn: process.env.FORGOT_PASSWORD_TOKEN_EXPIRE_MINUTES
@@ -56,8 +57,17 @@ class AuthServices {
     })
   }
 
-  private signAccessAndRefreshToken = async (user_id: string) => {
-    return Promise.all([this.signAccessToken(user_id), this.signRefreshToken(user_id)])
+  private signAccessAndRefreshToken = async ({ user_id, verify }: { user_id: string; verify: VerifyStatus }) => {
+    return Promise.all([
+      this.signAccessToken({
+        user_id,
+        verify
+      }),
+      this.signRefreshToken({
+        user_id,
+        verify
+      })
+    ])
   }
 
   // register
@@ -66,7 +76,10 @@ class AuthServices {
       const _id = new ObjectId()
       const user_id = _id.toString()
 
-      const email_verify_token = await this.signEmailVerifyToken(user_id)
+      const email_verify_token = await this.signEmailVerifyToken({
+        user_id,
+        verify: VerifyStatus.unverified
+      })
 
       await databaseServices.users.insertOne(
         new UserModal({
@@ -77,7 +90,10 @@ class AuthServices {
         })
       )
       // generate token
-      const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+      const [access_token, refresh_token] = await this.signAccessAndRefreshToken({
+        user_id,
+        verify: VerifyStatus.unverified
+      })
 
       // save refresh token to database
       await databaseServices.refreshTokens.insertOne({
@@ -96,11 +112,14 @@ class AuthServices {
   }
 
   // login
-  async login({ user_id }: { user_id?: string }) {
+  async login({ user_id, verify }: { user_id?: string; verify?: VerifyStatus }) {
     try {
       if (user_id) {
         // generate token
-        const [access_token, refresh_token] = await this.signAccessAndRefreshToken(user_id)
+        const [access_token, refresh_token] = await this.signAccessAndRefreshToken({
+          user_id,
+          verify: verify || VerifyStatus.unverified
+        })
         // save refresh token to database
         await databaseServices.refreshTokens.insertOne({
           user_id,
@@ -195,7 +214,10 @@ class AuthServices {
         },
         {
           $set: {
-            email_verify_token: await this.signEmailVerifyToken(user_id)
+            email_verify_token: await this.signEmailVerifyToken({
+              user_id,
+              verify: VerifyStatus.unverified
+            })
           },
           $currentDate: {
             updated_at: true
@@ -225,9 +247,12 @@ class AuthServices {
 
   // forgot password
 
-  async forgotPassword({ user_id }: { user_id: string }) {
+  async forgotPassword({ user_id, verify }: { user_id: string; verify: VerifyStatus }) {
     try {
-      const tokenForgotPassword = await this.signForgotPasswordToken(user_id)
+      const tokenForgotPassword = await this.signForgotPasswordToken({
+        user_id,
+        verify
+      })
       await databaseServices.users.updateOne(
         {
           _id: new ObjectId(user_id)

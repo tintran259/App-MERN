@@ -8,7 +8,7 @@ import databaseServices from '~/services/database.services'
 import { sha256 } from '~/utils/sha256'
 import { verifyToken } from '~/utils/jwt'
 import { errorMessage } from '~/utils/errorMessage'
-import { validateAccessToken } from './common.middleware'
+import { validateAccessToken, nameSchema, dateOfBirthSchema } from './common.middleware'
 
 const passwordSchema: ParamSchema = {
   isLength: {
@@ -179,21 +179,14 @@ const registerValidation = checkSchema(
       }
     },
     name: {
-      notEmpty: true,
-      isLength: {
-        errorMessage: MESSAGE_ERROR.NAME_LENGTH,
-        options: { min: 3 }
-      },
-      trim: true
+      ...nameSchema,
+      notEmpty: true
     },
     password: passwordSchema,
     confirm_password: confirmPasswordSchema,
     date_of_birth: {
-      isDate: {
-        errorMessage: MESSAGE_ERROR.DATE_INVALID
-      },
-      notEmpty: true,
-      trim: true
+      ...dateOfBirthSchema,
+      notEmpty: true
     }
   },
   // Check Body request
@@ -334,6 +327,8 @@ const validateMailForgotPassword = checkSchema(
           }
 
           req.body.user_id = user._id.toString()
+
+          req.body.info = user
         }
       }
     }

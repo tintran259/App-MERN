@@ -3,10 +3,11 @@ import authServices from '~/services/auth.services'
 import { ParamsDictionary } from 'express-serve-static-core'
 // types
 import { IRegisterRequest, ILoginRequest } from '~/types/auth.type'
+import UserModal from '~/models/user.model'
 
 const loginControllerUser = async (req: Request<ParamsDictionary, any, ILoginRequest>, res: Response) => {
   const { user_id, info } = req.body
-  const result = (await authServices.login({ user_id })) as Record<string, string>
+  const result = (await authServices.login({ user_id, verify: info?.verify })) as Record<string, string>
 
   res.status(200).json({
     message: 'Login Success',
@@ -52,8 +53,11 @@ const resendEmailVerifyController = async (req: Request<ParamsDictionary, any, {
   res.status(200).json({ message: 'Email sent' })
 }
 
-const forgotPasswordController = async (req: Request<ParamsDictionary, any, { user_id: string }>, res: Response) => {
-  const result = await authServices.forgotPassword({ user_id: req.body.user_id })
+const forgotPasswordController = async (
+  req: Request<ParamsDictionary, any, { user_id: string; info: UserModal }>,
+  res: Response
+) => {
+  const result = await authServices.forgotPassword({ user_id: req.body.user_id, verify: req.body.info.verify })
 
   res.status(200).json({ message: 'Email forgot password sent', data: result })
 }
