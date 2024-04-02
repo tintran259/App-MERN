@@ -8,56 +8,13 @@ import databaseServices from '~/services/database.services'
 import { sha256 } from '~/utils/sha256'
 import { verifyToken } from '~/utils/jwt'
 import { errorMessage } from '~/utils/errorMessage'
-import { validateAccessToken, nameSchema, dateOfBirthSchema } from './common.middleware'
-
-const passwordSchema: ParamSchema = {
-  isLength: {
-    errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
-    options: { min: 6 }
-  },
-  notEmpty: true,
-  trim: true,
-  isStrongPassword: {
-    errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
-    options: {
-      minLength: 6,
-      minLowercase: 1,
-      minUppercase: 1,
-      minNumbers: 1,
-      minSymbols: 1
-    }
-  }
-}
-
-const confirmPasswordSchema: ParamSchema = {
-  isLength: {
-    errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
-    options: { min: 6 }
-  },
-  notEmpty: true,
-  trim: true,
-  isStrongPassword: {
-    errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
-    options: {
-      minLength: 6,
-      minLowercase: 1,
-      minUppercase: 1,
-      minNumbers: 1,
-      minSymbols: 1
-    }
-  },
-  custom: {
-    options: (value: string, { req }) => {
-      if (value !== req.body.password) {
-        throw new ErrorServices({
-          message: MESSAGE_ERROR.PASSWORD_NOT_MATCH,
-          statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY
-        })
-      }
-      return true
-    }
-  }
-}
+import {
+  validateAccessToken,
+  nameSchema,
+  dateOfBirthSchema,
+  passwordSchema,
+  confirmPasswordSchema
+} from './common.middleware'
 
 const forgotPasswordTokenSchema: ParamSchema = {
   trim: true,
@@ -352,6 +309,77 @@ const validateResetPassword = checkSchema(
   ['body']
 )
 
+/**
+ * Change Password
+ */
+
+const changePasswordValidator = checkSchema(
+  {
+    old_password: {
+      custom: {
+        options: async (value, { req }) => {
+          try {
+            if (!value) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.PASSWORD_REQUIRED,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              })
+            }
+
+            const user = await databaseServices.users.findOne({ _id: new ObjectId(req.body.user_id) })
+            if (!user) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.USER_NOT_FOUND,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              })
+            }
+
+            const { password } = user
+
+            const isMatch = sha256(value) === password
+
+            if (!isMatch) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.PASSWORD_IS_NOT_MATCH,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              })
+            }
+
+            return true
+          } catch (error) {
+            errorMessage({
+              error,
+              errorDefault: {
+                message: MESSAGE_ERROR.BAD_REQUEST,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              }
+            })
+          }
+        }
+      }
+    },
+    new_password: {
+      ...passwordSchema
+    },
+    new_confirm_password: {
+      ...confirmPasswordSchema,
+      custom: {
+        options: (value: string, { req }) => {
+          if (value !== req.body.new_password) {
+            throw new ErrorServices({
+              message: MESSAGE_ERROR.PASSWORD_NOT_MATCH,
+              statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY
+            })
+          }
+          return true
+        }
+      }
+    }
+  },
+
+  ['body']
+)
+
 export {
   loginValidation,
   registerValidation,
@@ -360,5 +388,6 @@ export {
   validateMailToken,
   validateMailForgotPassword,
   validateForgotPasswordToken,
-  validateResetPassword
+  validateResetPassword,
+  changePasswordValidator
 }

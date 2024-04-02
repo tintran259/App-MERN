@@ -8,7 +8,8 @@ import {
   registerControllerUser,
   resendEmailVerifyController,
   verifyForgotPasswordTokenController,
-  resetPasswordController
+  resetPasswordController,
+  changePasswordController
 } from '~/controllers/auth.controller'
 // middleware
 import {
@@ -19,8 +20,10 @@ import {
   validateMailToken,
   validateMailForgotPassword,
   validateForgotPasswordToken,
-  validateResetPassword
+  validateResetPassword,
+  changePasswordValidator
 } from '~/middlewares/auth.middleware'
+import { verifyUserValidator } from '~/middlewares/user.middleware'
 // utils
 import { validate } from '~/utils/validate'
 import { asyncWrapper } from '~/utils/asyncWrapper'
@@ -106,5 +109,18 @@ router.post(
  */
 
 router.post('/reset-password', validate(validateResetPassword), asyncWrapper(resetPasswordController))
+
+/**
+ * Description: Change Password
+ * Route: PUT /change-password
+ */
+
+router.put(
+  '/change-password',
+  validate(validateAccessToken),
+  verifyUserValidator,
+  validate(changePasswordValidator),
+  asyncWrapper(changePasswordController)
+)
 
 export default router

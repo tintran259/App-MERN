@@ -77,4 +77,53 @@ const validateAccessToken = checkSchema(
   ['headers']
 )
 
-export { validateAccessToken, nameSchema, dateOfBirthSchema }
+const passwordSchema: ParamSchema = {
+  isLength: {
+    errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
+    options: { min: 6 }
+  },
+  notEmpty: true,
+  trim: true,
+  isStrongPassword: {
+    errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
+    options: {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    }
+  }
+}
+
+const confirmPasswordSchema: ParamSchema = {
+  isLength: {
+    errorMessage: MESSAGE_ERROR.LENGTH_PASSWORD,
+    options: { min: 6 }
+  },
+  notEmpty: true,
+  trim: true,
+  isStrongPassword: {
+    errorMessage: MESSAGE_ERROR.STRONG_PASSWORD,
+    options: {
+      minLength: 6,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    }
+  },
+  custom: {
+    options: (value: string, { req }) => {
+      if (value !== req.body.password) {
+        throw new ErrorServices({
+          message: MESSAGE_ERROR.PASSWORD_NOT_MATCH,
+          statusCode: STATUS_NAMING.UNPROCESSABLE_ENTITY
+        })
+      }
+      return true
+    }
+  }
+}
+
+export { validateAccessToken, nameSchema, dateOfBirthSchema, passwordSchema, confirmPasswordSchema }

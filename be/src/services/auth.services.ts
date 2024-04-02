@@ -307,6 +307,34 @@ class AuthServices {
       })
     }
   }
+
+  async changePassword({ user_id, password }: { user_id: string; password: string }) {
+    try {
+      console.log({ user_id, password })
+
+      await databaseServices.users.updateOne(
+        {
+          _id: new ObjectId(user_id)
+        },
+        {
+          $set: {
+            password: sha256(password)
+          },
+          $currentDate: {
+            updated_at: true
+          }
+        }
+      )
+    } catch (error) {
+      errorMessage({
+        error,
+        errorDefault: {
+          message: MESSAGE_ERROR.RESET_PASSWORD_TOKEN_REQUIRED,
+          statusCode: STATUS_NAMING.UNAUTHORIZED
+        }
+      })
+    }
+  }
 }
 
 const authServices = new AuthServices()

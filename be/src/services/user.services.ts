@@ -5,6 +5,7 @@ import { STATUS_NAMING } from '~/constants/statusNaming'
 import { ErrorServices } from './error.services'
 import { MESSAGE_ERROR } from '~/constants/messageError'
 import { UpdateMeReqBody } from '~/types/user.type'
+import FollowerModal from '~/models/follower'
 
 class UserServices {
   async getMe({ user_id }: { user_id: string }) {
@@ -46,6 +47,45 @@ class UserServices {
         }
       )
       return user
+    } catch (error) {
+      errorMessage({
+        error,
+        errorDefault: {
+          message: MESSAGE_ERROR.USER_NOT_FOUND,
+          statusCode: STATUS_NAMING.INTERNAL_SERVER_ERROR
+        }
+      })
+    }
+  }
+
+  async followerUser({ user_id, follower_user_id }: { user_id: string; follower_user_id: string }) {
+    try {
+      const findUserIsFollow = await databaseServices.followers.findOne({
+        user_id: new ObjectId(user_id),
+        follower_user_id: new ObjectId(follower_user_id)
+      })
+
+      if (findUserIsFollow) {
+        // UnFollow
+        await databaseServices.followers.deleteOne({
+          user_id: new ObjectId(user_id),
+          follower_user_id: new ObjectId(follower_user_id)
+        })
+
+        return {
+          message: 'Unfollow success'
+        }
+      } else {
+        // Follow
+        await databaseServices.followers.insertOne({
+          user_id: new ObjectId(user_id),
+          follower_user_id: new ObjectId(follower_user_id)
+        })
+
+        return {
+          message: 'Follow success'
+        }
+      }
     } catch (error) {
       errorMessage({
         error,

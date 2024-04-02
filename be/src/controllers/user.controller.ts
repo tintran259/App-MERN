@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { ParamsDictionary } from 'express-serve-static-core'
 import userServices from '~/services/user.services'
 import { VerifyStatus } from '~/types/auth.enum'
+import { FollowerTypeModal } from '~/types/follower.type'
 import { UpdateMeReqBody } from '~/types/user.type'
 
 const getMeController = async (req: Request<ParamsDictionary, any, { user_id: string }>, res: Response) => {
@@ -22,4 +23,22 @@ const updateMeController = async (
 
   res.status(200).json({ message: 'Update user success', data: result })
 }
-export { getMeController, updateMeController }
+
+const followerController = async (
+  req: Request<
+    ParamsDictionary,
+    any,
+    {
+      follower_user_id: string
+      user_id: string
+    }
+  >,
+  res: Response
+) => {
+  const { user_id, follower_user_id } = req.body
+  const result = await userServices.followerUser({ user_id, follower_user_id })
+
+  res.status(200).json({ message: result?.message })
+}
+
+export { getMeController, updateMeController, followerController }

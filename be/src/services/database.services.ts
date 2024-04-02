@@ -4,6 +4,7 @@ import { Express } from 'express'
 import UserModal from '~/models/user.model'
 import { NAME_COLLECTION } from '~/constants'
 import RefreshTokenModel from '~/models/refreshToken.model'
+import FollowerModal from '~/models/follower'
 
 config()
 const port = 3000
@@ -40,6 +41,10 @@ class DatabaseServices {
 
   get refreshTokens(): Collection<RefreshTokenModel> {
     return this.db.collection(NAME_COLLECTION.REFRESH_TOKENS)
+  }
+
+  get followers(): Collection<FollowerModal> {
+    return this.db.collection(NAME_COLLECTION.FOLLOWERS)
   }
 }
 

@@ -6,6 +6,11 @@ import { ErrorServices } from '~/services/error.services'
 import { STATUS_NAMING } from '~/constants/statusNaming'
 import { MESSAGE_ERROR } from '~/constants/messageError'
 import { dateOfBirthSchema, nameSchema } from '~/middlewares/common.middleware'
+import databaseServices from '~/services/database.services'
+import { ObjectId } from 'mongodb'
+import { errorMessage } from '~/utils/errorMessage'
+import { sha256 } from '~/utils/sha256'
+import { passwordSchema, confirmPasswordSchema } from '~/middlewares/common.middleware'
 /**
  * check verify user
  */
@@ -13,6 +18,7 @@ import { dateOfBirthSchema, nameSchema } from '~/middlewares/common.middleware'
 const verifyUserValidator = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { verify } = req.body.decode_token
+
     if (verify === VerifyStatus.unverified) {
       new ErrorServices({
         message: MESSAGE_ERROR.USER_NOT_VERIFIED,
@@ -84,4 +90,55 @@ const updateMeValidator = checkSchema(
   ['body']
 )
 
-export { verifyUserValidator, updateMeValidator }
+/**
+ * Follow user
+ * - user_id
+ * - follower_user_id
+ */
+
+const followerValidator = checkSchema(
+  {
+    follower_user_id: {
+      custom: {
+        options: async (value, { req }) => {
+          try {
+            // check follow by yourself
+            if (!value) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.FOLLOWER_USER_ID_REQUIRED,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              })
+            }
+            if (value === req.body.user_id) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.FOLLOWER_BY_YOURSELF,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              })
+            }
+            // check follow user id exist
+            const user = await databaseServices.users.findOne({ _id: new ObjectId(value) })
+
+            if (!user) {
+              throw new ErrorServices({
+                message: MESSAGE_ERROR.USER_NOT_FOUND,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              })
+            }
+            return true
+          } catch (error) {
+            errorMessage({
+              error,
+              errorDefault: {
+                message: MESSAGE_ERROR.USER_NOT_FOUND,
+                statusCode: STATUS_NAMING.BAD_REQUEST
+              }
+            })
+          }
+        }
+      }
+    }
+  },
+  ['body']
+)
+
+export { verifyUserValidator, updateMeValidator, followerValidator }

@@ -39,7 +39,11 @@ const MESSAGE_ERROR = {
   BIO_LENGTH: 'Bio must be at most 255 characters long',
   USERNAME_LENGTH: 'Username must be at least 3 characters long and at most 10 characters long',
   COVER_PHOTO_INVALID: 'Cover photo is invalid',
-  AVATAR_INVALID: 'Avatar is invalid'
+  AVATAR_INVALID: 'Avatar is invalid',
+  FOLLOWER_BY_YOURSELF: 'You can not follow yourself',
+  FOLLOWER_USER_ID_REQUIRED: 'Follower user id is required',
+  PASSWORD_IS_NOT_MATCH: 'Password is not match with current password',
+  PASSWORD_REQUIRED: 'Password is required'
 }
 
 export { MESSAGE_ERROR }

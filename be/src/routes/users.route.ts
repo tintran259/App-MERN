@@ -2,10 +2,12 @@ import { Router } from 'express'
 // controllers
 import { getMeController } from '~/controllers/user.controller'
 import { updateMeController } from '~/controllers/user.controller'
+import { followerController } from '~/controllers/user.controller'
 // middleware
 import { validate } from '~/utils/validate'
 import { validateAccessToken } from '~/middlewares/common.middleware'
-import { verifyUserValidator, updateMeValidator } from '~/middlewares/user.middleware'
+import { verifyUserValidator, updateMeValidator, followerValidator } from '~/middlewares/user.middleware'
+import { asyncWrapper } from '~/utils/asyncWrapper'
 
 const router = Router()
 
@@ -31,6 +33,18 @@ router.patch(
   verifyUserValidator,
   validate(updateMeValidator),
   updateMeController
+)
+
+/**
+ * Description: Follower user
+ */
+
+router.post(
+  '/follower',
+  validate(validateAccessToken),
+  verifyUserValidator,
+  validate(followerValidator),
+  asyncWrapper(followerController)
 )
 
 export default router

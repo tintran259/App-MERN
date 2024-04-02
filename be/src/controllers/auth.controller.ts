@@ -78,6 +78,14 @@ const resetPasswordController = async (
   res.status(200).json({ message: 'Password reset success' })
 }
 
+const changePasswordController = async (
+  req: Request<ParamsDictionary, any, { user_id: string; new_password: string }>,
+  res: Response
+) => {
+  await authServices.changePassword({ user_id: req.body.user_id, password: req.body.new_password })
+  res.status(200).json({ message: 'Change password success' })
+}
+
 export {
   loginControllerUser,
   registerControllerUser,
@@ -86,5 +94,6 @@ export {
   resendEmailVerifyController,
   forgotPasswordController,
   verifyForgotPasswordTokenController,
-  resetPasswordController
+  resetPasswordController,
+  changePasswordController
 }
