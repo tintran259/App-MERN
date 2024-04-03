@@ -16,7 +16,5 @@ appRouter(app)
 databaseServices.connect(app)
 // Handle error
 app.use((err: ErrorServices, req: Request, res: Response, next: NextFunction): void => {
-  console.log(':err 111111111111', err, res)
-
   res.status(err.statusCode || STATUS_NAMING.INTERNAL_SERVER_ERROR).json({ errors: err })
 })
