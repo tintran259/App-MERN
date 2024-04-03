@@ -310,8 +310,6 @@ class AuthServices {
 
   async changePassword({ user_id, password }: { user_id: string; password: string }) {
     try {
-      console.log({ user_id, password })
-
       await databaseServices.users.updateOne(
         {
           _id: new ObjectId(user_id)
