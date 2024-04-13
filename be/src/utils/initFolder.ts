@@ -32,7 +32,7 @@ export const handleUploadSingleImage = async (req: Request): Promise<File> => {
     }
   })
 
-  return new Promise((resolve, reject) => {
+  return new Promise<File>((resolve, reject) => {
     form.parse(req, (err, fields, files) => {
       if (Object.keys(files).length === 0) {
         reject(
@@ -54,4 +54,8 @@ export const handleUploadSingleImage = async (req: Request): Promise<File> => {
       }
     })
   })
+}
+
+export const getNameImage = (filename: string) => {
+  return `${filename.substring(0, filename.lastIndexOf('.'))}.jpg`
 }

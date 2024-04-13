@@ -29,6 +29,8 @@ class DatabaseServices {
       app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`)
       })
+    } catch (e) {
+      console.error('Error occurred while connecting to MongoDB', e)
     } finally {
       // Ensures that the client will close when you finish/error
       // await this.client.close()
