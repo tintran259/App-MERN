@@ -7,7 +7,7 @@ import RefreshTokenModel from '~/models/refreshToken.model'
 import FollowerModal from '~/models/follower'
 
 config()
-const port = 3000
+const port = process.env.PORT || 3000
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@twitter.nq5xaah.mongodb.net/?retryWrites=true&w=majority&appName=Twitter`
 

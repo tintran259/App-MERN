@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
-    "dev": "npx nodemon",
+    "dev": "npx nodemon --dev",
     "build": "rimraf ./dist && tsc && tsc-alias",
-    "start": "node dist/index.js",
+    "start": "node dist/index.js --prod",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
